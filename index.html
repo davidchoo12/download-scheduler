@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Download Scheduler</title>
+</head>
+<body>
+  <textarea id="download-list" cols="30" rows="10">https://www.youtube.com/watch?v=GgA2qukVGto</textarea><br />
+  <input id="start-time" type="datetime-local" value="2018-07-10T01:10"><br />
+  <input id="end-time" type="datetime-local"><br />
+  <button id="start-button">Schedule</button>
+  <script>
+    let startInput;
+    // const endInput = document.querySelector('#end-time');
+    let startTime;
+    // const endTime = new Date(endInput.value).getTime();
+    let downloadList;
+    let index = 0;
+    document.querySelector('#start-button').addEventListener('click', () => {
+      startInput = document.querySelector('#start-time');
+      startTime = new Date(startInput.value).getTime();
+      downloadList = document.querySelector('#download-list').value.split('\n');//match(/https:\/\/www.youtube.com\/watch\?v=.+/g);
+      const now = new Date().getTime();
+      downloadList.forEach( (e,i) => {
+        const t = startTime - now + 10000 * i;
+        if (t < 0) { // if startTime is in past, just start dl
+          downloadYoutubeUrl(e);
+        }
+        setTimeout(downloadYoutubeUrl, t, e);
+        console.log('Scheduling download for ' + e + ' in ' + t + 'ms');
+      });
+      // const startTimeout = setTimeout(startDownload, startTime - now);
+      // setTimeout(startDownload, 3000)
+    });
+    function downloadYoutubeUrl (url) {
+      fetch('https://cors-anywhere.herokuapp.com/https://www.clipconverter.cc/check.php', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'origin': 'github.com'
+        },
+        body: "mediaurl="+url
+      })
+      .then(res => res.json())
+      .then(j => {
+        var filename = encodeURIComponent(j.filename).replace(/%20/g, '+');
+        // console.log(filename);
+        if (typeof(j.url) == 'undefined') {
+          console.log(j);
+          return;
+        }
+        if (j.url.find(e => e.text.includes('(3GP)'))) {
+          let dl = j.url.find(e => e.text.includes('(3GP)'));
+          console.log('Downloading ' + url);
+          let anchor = document.createElement('a');
+          anchor.href = dl.url;
+          anchor.setAttribute('download', 'a.mp4');
+          anchor.style.display = 'none';
+          document.body.appendChild(anchor);
+          anchor.click();
+        } else {
+          console.log('No 3GP available for ' + u + ' :\n');
+          j.url.forEach(e => console.log(e.text + '\n'));
+        }
+      })
+      .catch(console.err);
+      // console.log('Downloading ' + url);
+      // let anchor = document.createElement('a');
+      // anchor.href = url;
+      // anchor.setAttribute('download', 'a.html');
+      // anchor.style.display = 'none';
+      // // anchor.addEventListener('click', function(e) {
+      // //   e.stopPropagation();
+      // //   this.removeEventListener('click', arguments.callee);
+      // // });
+      // document.body.appendChild(anchor);
+      // // setTimeout(function() {
+      //   anchor.click();
+      // // }, 66);
+    }
+  </script>
+</body>
+</html>
