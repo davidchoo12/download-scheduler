@@ -5,10 +5,34 @@
   <title>Download Scheduler</title>
 </head>
 <body>
-  <textarea id="download-list" cols="30" rows="10">https://www.youtube.com/watch?v=GgA2qukVGto</textarea><br />
+  <textarea id="download-list" cols="30" rows="10">THEY'VE TAKEN OUR WORLD | Mugsters https://www.youtube.com/watch?v=J48PKxAjBL4</textarea><br />
   <input id="start-time" type="datetime-local" value="2018-07-10T01:10"><br />
   <input id="end-time" type="datetime-local"><br />
   <button id="start-button">Schedule</button>
+  <div id="log"></div>
+  <script id="worker" type="javascript/worker">
+    self.onmessage = function(msg) {
+      const {downloadList, startTime} = msg.data;
+      const now = new Date().getTime();
+      downloadList.forEach( (e,i) => {
+        const t = startTime - now + 5 * 60 * 1000 * i; // 5 min interval for each link
+        if (t < 0) { // if startTime is in past, just start dl
+          // downloadYoutubeUrl(e);
+          download(e);
+        } else {
+          setTimeout(download, t, e);
+          log('Scheduling download for ' + e + ' in ' + t + 'ms');
+        }
+      });
+      // setTimeout(self.postMessage, 3000, 'msg from worker');
+    }
+    function download(url) {
+      self.postMessage({type: 'download', url: url});
+    }
+    function log(msg) {
+      self.postMessage({type: 'log', msg: msg});
+    }
+  </script>
   <script>
     let startInput;
     // const endInput = document.querySelector('#end-time');
@@ -16,23 +40,49 @@
     // const endTime = new Date(endInput.value).getTime();
     let downloadList;
     let index = 0;
+    function log(msg) {
+      let fragment = document.createDocumentFragment();
+      fragment.appendChild(document.createTextNode('[' + new Date().toTimeString().slice(0, 8) + '] ' + msg));
+      fragment.appendChild(document.createElement('br'));
+      document.querySelector('#log').appendChild(fragment);
+    }
+    let blob = new Blob([document.querySelector('#worker').textContent]);
+    let worker = new Worker(window.URL.createObjectURL(blob));
+    worker.onmessage = function(e) {
+      // log('received ' + e.data);
+      const data = e.data;
+      switch (data.type) {
+        case 'log':
+          log(data.msg);
+          break;
+        case 'download':
+          downloadYoutubeUrl(data.url);
+          break;
+      }
+    }
     document.querySelector('#start-button').addEventListener('click', () => {
+      downloadList = document.querySelector('#download-list').value.match(/https:\/\/www.youtube.com\/watch\?v=.+/g); //split('\n');
       startInput = document.querySelector('#start-time');
       startTime = new Date(startInput.value).getTime();
-      downloadList = document.querySelector('#download-list').value.split('\n');//match(/https:\/\/www.youtube.com\/watch\?v=.+/g);
-      const now = new Date().getTime();
-      downloadList.forEach( (e,i) => {
-        const t = startTime - now + 10000 * i;
-        if (t < 0) { // if startTime is in past, just start dl
-          downloadYoutubeUrl(e);
-        }
-        setTimeout(downloadYoutubeUrl, t, e);
-        console.log('Scheduling download for ' + e + ' in ' + t + 'ms');
-      });
+      // const now = new Date().getTime();
+      const msg = {
+        downloadList: downloadList,
+        startTime: startTime,
+      };
+      worker.postMessage(msg);
+      // downloadList.forEach( (e,i) => {
+      //   const t = startTime - now + 10000 * i;
+      //   if (t < 0) { // if startTime is in past, just start dl
+      //     downloadYoutubeUrl(e);
+      //   }
+      //   setTimeout(downloadYoutubeUrl, t, e);
+      //   log('Scheduling download for ' + e + ' in ' + t + 'ms');
+      // });
       // const startTimeout = setTimeout(startDownload, startTime - now);
       // setTimeout(startDownload, 3000)
     });
     function downloadYoutubeUrl (url) {
+      log('Starting download for ' + url);
       fetch('https://cors-anywhere.herokuapp.com/https://www.clipconverter.cc/check.php', {
         method: 'POST',
         headers: {
@@ -43,28 +93,30 @@
       })
       .then(res => res.json())
       .then(j => {
-        var filename = encodeURIComponent(j.filename).replace(/%20/g, '+');
-        // console.log(filename);
+        log('Fetch clipconverter success');
+        var filesystemfriendlyname = j.filename.replace(/[\\/\:\*?"<>|]/g, '-');
+        // log(filename);
         if (typeof(j.url) == 'undefined') {
-          console.log(j);
+          log('j.url is undefined, j: ' + j);
           return;
         }
         if (j.url.find(e => e.text.includes('(3GP)'))) {
           let dl = j.url.find(e => e.text.includes('(3GP)'));
-          console.log('Downloading ' + url);
+          log('Downloading ' + dl.url);
           let anchor = document.createElement('a');
           anchor.href = dl.url;
-          anchor.setAttribute('download', 'a.mp4');
-          anchor.style.display = 'none';
+          anchor.setAttribute('download', filesystemfriendlyname + '.mp4');
+          anchor.innerText = filesystemfriendlyname + '.mp4';
+          // anchor.style.display = 'none';
           document.body.appendChild(anchor);
           anchor.click();
         } else {
-          console.log('No 3GP available for ' + u + ' :\n');
-          j.url.forEach(e => console.log(e.text + '\n'));
+          log('No 3GP available for ' + u + ' :\n');
+          j.url.forEach(e => log(e.text + '\n'));
         }
       })
-      .catch(console.err);
-      // console.log('Downloading ' + url);
+      .catch(log);
+      // log('Downloading ' + url);
       // let anchor = document.createElement('a');
       // anchor.href = url;
       // anchor.setAttribute('download', 'a.html');
