@@ -6,14 +6,16 @@
 </head>
 <body>
   <textarea id="download-list" cols="30" rows="10">THEY'VE TAKEN OUR WORLD | Mugsters https://www.youtube.com/watch?v=J48PKxAjBL4</textarea><br />
-  <input id="start-time" type="datetime-local" value="2018-07-10T01:10"><br />
+  <input id="start-time" type="datetime-local" value="2018-07-12T01:10"><br />
   <input id="end-time" type="datetime-local"><br />
   <button id="start-button">Schedule</button>
+  <p>Time remaining: <span id="timer">-</span></p>
   <div id="log"></div>
   <script id="worker" type="javascript/worker">
     self.onmessage = function(msg) {
       const {downloadList, startTime} = msg.data;
       const now = new Date().getTime();
+      let interval;
       downloadList.forEach( (e,i) => {
         const t = startTime - now + 5 * 60 * 1000 * i; // 5 min interval for each link
         if (t < 0) { // if startTime is in past, just start dl
@@ -21,10 +23,16 @@
           download(e);
         } else {
           setTimeout(download, t, e);
+          let seconds = parseInt(t / 1000);
+          interval = setInterval(() => tick(--seconds), 1000);
           log('Scheduling download for ' + e + ' in ' + t + 'ms');
         }
       });
       // setTimeout(self.postMessage, 3000, 'msg from worker');
+    }
+    function tick(seconds) {
+      if (seconds < 0) clearInterval(interval);
+      self.postMessage({type: 'tick', seconds: seconds});
     }
     function download(url) {
       self.postMessage({type: 'download', url: url});
@@ -46,6 +54,9 @@
       fragment.appendChild(document.createElement('br'));
       document.querySelector('#log').appendChild(fragment);
     }
+    function tick(seconds) {
+      document.querySelector('#timer').innerText = `${parseInt(seconds / 3600)}:${parseInt(seconds % 3600 / 60)}:${seconds % 60}`;
+    }
     let blob = new Blob([document.querySelector('#worker').textContent]);
     let worker = new Worker(window.URL.createObjectURL(blob));
     worker.onmessage = function(e) {
@@ -57,6 +68,9 @@
           break;
         case 'download':
           downloadYoutubeUrl(data.url);
+          break;
+        case 'tick':
+          tick(data.seconds);
           break;
       }
     }
