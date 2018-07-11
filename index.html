@@ -40,8 +40,7 @@
       const now = new Date().getTime();
       tickCounter[timerIndex]++;
       avgTick[timerIndex] = (now - firstTick[timerIndex]) / tickCounter[timerIndex];
-      console.log(avgTick[timerIndex]);
-      self.postMessage({type: 'tick', seconds: seconds, timerIndex: timerIndex, avgTick: avgTick[timerIndex]});
+      self.postMessage({type: 'tick', seconds: seconds, timerIndex: timerIndex, avgTick: avgTick[timerIndex], tickCount: tickCounter[timerIndex]});
     }
     function download(url) {
       self.postMessage({type: 'download', url: url});
@@ -63,7 +62,7 @@
       fragment.appendChild(document.createElement('br'));
       document.querySelector('#log').appendChild(fragment);
     }
-    function tick(seconds, timerIndex, avgTick) {
+    function tick(seconds, timerIndex, avgTick, tickCount) {
       if (!document.querySelector(`#timer-${timerIndex}`)) {
         let fragment = document.createDocumentFragment();
         let timer = document.createElement('span');
@@ -73,7 +72,7 @@
         fragment.appendChild(document.createElement('br'));
         document.querySelector('#timer-list').appendChild(fragment);
       }
-      document.querySelector(`#timer-${timerIndex}`).innerText = `${parseInt(seconds / 3600)}:${parseInt(seconds % 3600 / 60)}:${seconds % 60}, avgTick: ${avgTick}`;
+      document.querySelector(`#timer-${timerIndex}`).innerText = `${parseInt(seconds / 3600)}:${parseInt(seconds % 3600 / 60)}:${seconds % 60}, tickCount: ${tickCount}, avgTick: ${avgTick}`;
     }
     let blob = new Blob([document.querySelector('#worker').textContent]);
     let worker = new Worker(window.URL.createObjectURL(blob));
@@ -88,7 +87,7 @@
           downloadYoutubeUrl(data.url);
           break;
         case 'tick':
-          tick(data.seconds, data.timerIndex, data.avgTick);
+          tick(data.seconds, data.timerIndex, data.avgTick, data.tickCount);
           break;
       }
     }
