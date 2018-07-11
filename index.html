@@ -9,9 +9,12 @@
   <input id="start-time" type="datetime-local" value="2018-07-12T01:10"><br />
   <input id="end-time" type="datetime-local"><br />
   <button id="start-button">Schedule</button>
-  <p>Time remaining: <span id="timer">-</span></p>
+  <p id="timer-list"></p>
   <div id="log"></div>
   <script id="worker" type="javascript/worker">
+    let tickCounter = [];
+    let firstTick = [];
+    let avgTick = [];
     self.onmessage = function(msg) {
       const {downloadList, startTime} = msg.data;
       const now = new Date().getTime();
@@ -24,15 +27,21 @@
         } else {
           setTimeout(download, t, e);
           let seconds = parseInt(t / 1000);
-          interval = setInterval(() => tick(--seconds), 1000);
-          log('Scheduling download for ' + e + ' in ' + t + 'ms');
+          tickCounter[i] = 0;
+          firstTick[i] = now;
+          interval = setInterval(() => tick(--seconds, i), 1000);
+          log(`Scheduling download for ${e} in ${parseInt(seconds / 3600)}:${parseInt(seconds % 3600 / 60)}:${seconds % 60}`);
         }
       });
       // setTimeout(self.postMessage, 3000, 'msg from worker');
     }
-    function tick(seconds) {
+    function tick(seconds, timerIndex) {
       if (seconds < 0) clearInterval(interval);
-      self.postMessage({type: 'tick', seconds: seconds});
+      const now = new Date().getTime();
+      tickCounter[timerIndex]++;
+      avgTick[timerIndex] = (now - firstTick[timerIndex]) / tickCounter[timerIndex];
+      console.log(avgTick[timerIndex]);
+      self.postMessage({type: 'tick', seconds: seconds, timerIndex: timerIndex, avgTick: avgTick[timerIndex]});
     }
     function download(url) {
       self.postMessage({type: 'download', url: url});
@@ -54,8 +63,17 @@
       fragment.appendChild(document.createElement('br'));
       document.querySelector('#log').appendChild(fragment);
     }
-    function tick(seconds) {
-      document.querySelector('#timer').innerText = `${parseInt(seconds / 3600)}:${parseInt(seconds % 3600 / 60)}:${seconds % 60}`;
+    function tick(seconds, timerIndex, avgTick) {
+      if (!document.querySelector(`#timer-${timerIndex}`)) {
+        let fragment = document.createDocumentFragment();
+        let timer = document.createElement('span');
+        timer.id = `timer-${timerIndex}`;
+        fragment.appendChild(document.createTextNode(downloadList[timerIndex] + ' in '));
+        fragment.appendChild(timer);
+        fragment.appendChild(document.createElement('br'));
+        document.querySelector('#timer-list').appendChild(fragment);
+      }
+      document.querySelector(`#timer-${timerIndex}`).innerText = `${parseInt(seconds / 3600)}:${parseInt(seconds % 3600 / 60)}:${seconds % 60}, avgTick: ${avgTick}`;
     }
     let blob = new Blob([document.querySelector('#worker').textContent]);
     let worker = new Worker(window.URL.createObjectURL(blob));
@@ -70,7 +88,7 @@
           downloadYoutubeUrl(data.url);
           break;
         case 'tick':
-          tick(data.seconds);
+          tick(data.seconds, data.timerIndex, data.avgTick);
           break;
       }
     }
