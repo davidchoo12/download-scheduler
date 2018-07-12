@@ -27,6 +27,7 @@ function youtube(res, u) {
       var j = JSON.parse(b);
       if (j.redirect && j.redirect.includes('captcha')){
         console.log('needs recaptcha');
+        res.send('needs recaptcha');
       } else {
         var filename = encodeURIComponent(j.filename).replace(/%20/g, '+');
         console.log(filename);
@@ -34,23 +35,24 @@ function youtube(res, u) {
           console.log(j);
           return;
         }
-        if (j.url.find(e => e.text.includes('(720p)'))) {
-         json = j.url.find(e => e.text.includes('(720p)'));
-        } else if (j.url.find(e => e.text.includes('(720p), 60fps'))) {
-         json = j.url.find(e => e.text.includes('(720p), 60fps'));
-        } else {
-          console.log('No 720p available for ' + u + ' :\n');
-          j.url.forEach(e => console.log(e.text + '\n'));
-          return;
-        }
-        // if (j.url.find(e => e.text.includes('(3GP)'))) {
-        //   json = j.url.find(e => e.text.includes('(3GP)'));
+        // if (j.url.find(e => e.text.includes('(720p)'))) {
+        //  json = j.url.find(e => e.text.includes('(720p)'));
+        // } else if (j.url.find(e => e.text.includes('(720p), 60fps'))) {
+        //  json = j.url.find(e => e.text.includes('(720p), 60fps'));
         // } else {
-        //   console.log('No 3GP available for ' + u + ' :\n');
+        //   console.log('No 720p available for ' + u + ' :\n');
         //   j.url.forEach(e => console.log(e.text + '\n'));
         //   return;
         // }
-        url = json.url.replace(/&#type=mp4(.*)/g, '&&title=' + filename);
+        if (j.url.find(e => e.text.includes('(3GP)'))) {
+          json = j.url.find(e => e.text.includes('(3GP)'));
+        } else {
+          console.log('No 3GP available for ' + u + ' :\n');
+          j.url.forEach(e => console.log(e.text + '\n'));
+          // return;
+          res.send('no 3gp available :(');
+        }
+        url = json.url.replace(/&#type=3gp(.*)/g, '&&title=' + filename);
         // console.log(json);
         console.log('  URL:  ' + url);
         var filesystemfriendlyname = j.filename.replace(/[\\/\:\*?"<>|]/g, '-');
