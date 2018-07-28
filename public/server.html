@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Download Helper</title>
+  <style>
+    * {
+      font-family: consolas;
+    }
+    body {
+      width: 90%;
+    }
+    ul {
+      position: relative;
+      padding: 0;
+    }
+    li {
+      list-style-type: none;
+      padding: 0.2em;
+    }
+    input[type="checkbox"] {
+      margin-right: 1.2em;
+    }
+    textarea {
+      width: 100%;
+    }
+    .remove {
+      position: absolute;
+      right: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- <h3>Youtube</h3>
+  <h4>Jacksepticeye</h4>
+  <ul>
+    <li><input type="checkbox" name="" id=""><a href>asdfghjk</a></li>
+    <li><input type="checkbox" name="" id="">asdf</li>
+    <li><input type="checkbox" name="" id="">asdf</li>
+  </ul>
+  <h4>Markiplier</h4>
+  <ul>
+    <li><input type="checkbox" name="" id="-asdf" value="a">asdf</li>
+    <li><input type="checkbox" name="" id="fds" value="b">asdf</li>
+    <li><input type="checkbox" name="" id="a" value="c">asdf</li>
+  </ul> -->
+  <div id="animes"></div>
+  <div id="youtubes"></div>
+  <h4>Batch download</h4>
+  <textarea id="batchdl-textarea" cols="60" rows="5"></textarea>
+  <button id="batchdl-btn">Add</button>
+  <h4>Ordering list</h4>
+  <ul id="ordering-list"></ul>
+  <h4>Final list</h4>
+  <textarea id="final-textarea" cols="60" rows="15"></textarea>
+  <button id="final-btn">Download ADM.txt</button>
+  <script src="Sortable.min.js"></script>
+  <script>
+    let list = document.querySelector('#ordering-list');
+    const finalTextareaUpdate = () => {
+      let urlList = '';
+      document.querySelectorAll('.item-text').forEach(el => {
+        urlList += 'https://download-scheduler.herokuapp.com/' + el.innerText + '\n';
+      });
+      document.querySelector('#final-textarea').value = urlList;
+    };
+    let sortable = Sortable.create(list, {
+      filter: '.remove',
+      onFilter: e => {
+        const item = e.item;
+        const ctrl = e.target;
+        if (Sortable.utils.is(ctrl, '.remove')) {
+          item.parentNode.removeChild(item);  
+        }
+      }
+    });
+    document.querySelector('#batchdl-btn').addEventListener('click', e => {
+      let downloadList = document.querySelector('#batchdl-textarea').value.match(/http.+/g);
+      if (downloadList) {
+        downloadList.forEach(el => {
+          let item = document.createElement('li');
+          item.innerHTML = `<span class="item-text">${el}</span> <span class="remove">✖</span>`;
+          list.appendChild(item);
+        });
+        finalTextareaUpdate();
+      }
+    });
+    document.querySelector('#final-btn').addEventListener('click', e => {
+      function download(filename, text) {
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+      }
+      download("AMD.txt", document.querySelector('#final-textarea').value);
+    });
+    fetch('/links')
+    .then(res => res.json())
+    .then(body => {
+      let { animes, youtubes } = body;
+      let animeListHtml = animes.map(anime => `
+        <h4>${anime.anime}</h4>
+        <ul>
+          ${anime.episodes.map(episode => `
+            <li><a href="${episode.url}" target="_blank">${episode.episode}</a></li>
+          `).join('')}
+        </ul>
+      `).join('');
+      let youtubeListHtml = youtubes.map(youtube => `
+        <h4>${youtube.channel}</h4>
+        <ul>
+          ${youtube.videos.map(video => `
+            <li><input type="checkbox" id="${video.id}" value="https://www.youtube.com/watch?v=${video.id}"><a href="https://www.youtube.com/watch?v=${video.id}" target="_blank">${video.title}</a></li>
+          `).join('')}
+        </ul>
+      `).join('');
+      document.querySelector('#animes').innerHTML = animeListHtml;
+      document.querySelector('#youtubes').innerHTML = youtubeListHtml;
+      document.querySelectorAll('input[type="checkbox"]').forEach(el => el.addEventListener('change', e => {
+        if(e.target.checked) {
+          let item = document.createElement('li');
+          item.innerHTML = `<span id="item-${e.target.id}" class="item-text">${e.target.value}</span>`;
+          list.appendChild(item);
+        } else {
+          document.querySelector('#item-' + e.target.id).remove();
+        }
+        finalTextareaUpdate();
+      }));
+    });
+  </script>
+</body>
+</html>

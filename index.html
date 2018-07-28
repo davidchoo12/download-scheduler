@@ -92,7 +92,7 @@
       }
     }
     document.querySelector('#start-button').addEventListener('click', () => {
-      downloadList = document.querySelector('#download-list').value.match(/https:\/\/www.youtube.com\/watch\?v=.+/g); //split('\n');
+      downloadList = document.querySelector('#download-list').value.match(/(https:\/\/www.youtube.com\/watch\?v=.+)|(https:\/\/youtu.be\/.+)/g); //split('\n');
       startInput = document.querySelector('#start-time');
       startTime = new Date(startInput.value).getTime();
       // const now = new Date().getTime();
