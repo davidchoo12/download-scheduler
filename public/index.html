@@ -25,26 +25,19 @@
     textarea {
       width: 100%;
     }
+    #ordering-list li {
+      cursor: move;
+    }
     .remove {
       position: absolute;
       right: 0;
     }
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <!-- <h3>Youtube</h3>
-  <h4>Jacksepticeye</h4>
-  <ul>
-    <li><input type="checkbox" name="" id=""><a href>asdfghjk</a></li>
-    <li><input type="checkbox" name="" id="">asdf</li>
-    <li><input type="checkbox" name="" id="">asdf</li>
-  </ul>
-  <h4>Markiplier</h4>
-  <ul>
-    <li><input type="checkbox" name="" id="-asdf" value="a">asdf</li>
-    <li><input type="checkbox" name="" id="fds" value="b">asdf</li>
-    <li><input type="checkbox" name="" id="a" value="c">asdf</li>
-  </ul> -->
   <div id="animes"></div>
   <div id="youtubes"></div>
   <h4>Batch download</h4>
@@ -55,13 +48,26 @@
   <h4>Final list</h4>
   <textarea id="final-textarea" cols="60" rows="15"></textarea>
   <button id="final-btn">Download ADM.txt</button>
+  <button id="reset-btn">Reset</button>
+  <button id="storefiles-btn">View files</button>
+  <div id="storefiles" class="hidden">
+    <h4>otherlinks.txt</h4>
+    <textarea id="otherlinkstxt-textarea" cols="30" rows="10"></textarea>
+    <button id="otherlinkstxt-btn">Update</button>
+    <h4>srz.json</h4>
+    <textarea id="srzjson-textarea" cols="30" rows="10"></textarea>
+    <button id="srzjson-btn">Update</button>
+    <h4>yt.json</h4>
+    <textarea id="ytjson-textarea" cols="30" rows="10"></textarea>
+    <button id="ytjson-btn">Update</button>
+  </div>
   <script src="Sortable.min.js"></script>
   <script>
     let list = document.querySelector('#ordering-list');
     const finalTextareaUpdate = () => {
       let urlList = '';
       document.querySelectorAll('.item-text').forEach(el => {
-        urlList += 'https://download-scheduler.herokuapp.com/' + el.innerText + '\n';
+        urlList += 'https://download-scheduler.herokuapp.com/' + el.innerText + '\n'; // textarea ignores \r, so just use \n
       });
       document.querySelector('#final-textarea').value = urlList;
     };
@@ -73,7 +79,8 @@
         if (Sortable.utils.is(ctrl, '.remove')) {
           item.parentNode.removeChild(item);  
         }
-      }
+      },
+      onSort: finalTextareaUpdate
     });
     document.querySelector('#batchdl-btn').addEventListener('click', e => {
       let downloadList = document.querySelector('#batchdl-textarea').value.match(/http.+/g);
@@ -96,7 +103,7 @@
         element.click();
         document.body.removeChild(element);
       }
-      download("AMD.txt", document.querySelector('#final-textarea').value);
+      download("ADM.txt", document.querySelector('#final-textarea').value.replace(/\n/g, '\r\n'));
     });
     fetch('/links')
     .then(res => res.json())
@@ -130,6 +137,47 @@
         }
         finalTextareaUpdate();
       }));
+    });
+
+    document.querySelector('#reset-btn').addEventListener('click', () => {
+      document.querySelectorAll('input[type="checkbox"]').forEach(e => {
+        e.checked = false;
+      });
+      document.querySelector('#ordering-list').innerHTML = '';
+      document.querySelector('#batchdl-textarea').value = '';
+      document.querySelector('#final-textarea').value = '';
+    });
+
+    document.querySelector('#storefiles-btn').addEventListener('click', e => {
+      fetch('/store/otherlinks.txt')
+      .then(res => res.text())
+      .then(body => document.querySelector('#otherlinkstxt-textarea').value = body);
+      fetch('/store/srz.json')
+      .then(res => res.text())
+      .then(body => document.querySelector('#srzjson-textarea').value = body);
+      fetch('/store/yt.json')
+      .then(res => res.text())
+      .then(body => document.querySelector('#ytjson-textarea').value = body);
+      document.querySelector('#storefiles').classList.remove('hidden');
+    });
+    function update(path, content) {
+      fetch('/store/' + path, {
+        method: 'POST',
+        headers: {'content-type': 'application/x-www-form-urlencoded'},
+        body: content
+      })
+      .then(res => {
+        if (res.ok) alert('updated');
+      });
+    }
+    document.querySelector('#otherlinkstxt-btn').addEventListener('click', e => {
+      update('otherlinks.txt', document.querySelector('#otherlinkstxt-textarea').value);
+    });
+    document.querySelector('#srzjson-btn').addEventListener('click', e => {
+      update('srz.json', document.querySelector('#srzjson-textarea').value);
+    });
+    document.querySelector('#ytjson-btn').addEventListener('click', e => {
+      update('yt.json', document.querySelector('#ytjson-textarea').value);
     });
   </script>
 </body>
