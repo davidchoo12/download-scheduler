@@ -105,23 +105,30 @@ app.get('/http*', async (req, res) => {
     const mcResolved = await mc(url);
     if (mcResolved) {
       console.log('mcResolved: ', mcResolved);
+      const dir = '/store/zp downloads/';
       const path = await fetch(mcResolved)
       .then(res => {
         const filename = decodeURIComponent(res.headers.get('content-disposition')).match(/\[Soulreaperzone\.com\].+/)[0];
         console.log('filename: ', filename);
-        if (fs.existsSync(__dirname + '/store/zp downloads/' + filename)) {
+        if (fs.existsSync(__dirname + dir + filename)) {
           console.log('file exists: ', filename);
           return '/store/zp downloads/' + filename;
         } else {
+          const folder = dir.replace(/\/$/, '');
+          const folderSize = fs.readdirSync(__dirname + folder).map(file => fs.statSync(__dirname + folder + '/' + file).size).reduce((a, c) => a += c, 0);
+          if (folderSize > 900000000) { // heroku max size 1GB, so if exceeds 900MB, clear folder
+            fs.readdirSync(__dirname + folder).forEach(file => fs.unlinkSync(__dirname + folder  + '/' + file)); // loop files and delete
+            console.log('zp downloads folder size ' + (folderSize / 1000000) + 'MB > 900MB, cleared zp downloads');
+          }
           return new Promise((resolve, reject) => {
-            const dest = fs.createWriteStream(__dirname + '/store/zp downloads/' + filename);
+            const dest = fs.createWriteStream(__dirname + dir + filename);
             res.body.pipe(dest);
             res.body.on('error', err => {
               console.log('res.body error, ', err);
               reject(err);
             });
             dest.on('finish', () => {
-              resolve('/store/zp downloads/' + filename);
+              resolve(dir + filename);
             });
             dest.on('error', err => {
               console.log('dest error, ', err);
