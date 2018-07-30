@@ -1,6 +1,7 @@
 const express = require('express');
 // const request = require('request');
 const fetch = require('node-fetch');
+const http = require('http');
 const fs = require('fs');
 const mc = require('./mc');
 const yt = require('./yt');
@@ -103,7 +104,24 @@ app.get('/http*', async (req, res) => {
   } else if (url.match(/(https:\/\/www.mirrored.to\/files\/.+)/g)) {
     const mcResolved = await mc(url);
     if (mcResolved) {
-      res.redirect(mcResolved);
+      const path = await fetch(mcResolved)
+      .then(res => {
+        const filename = decodeURIComponent(res.headers.get('content-disposition')).match(/\[Soulreaperzone\.com\].+/)[0];
+        return new Promise((resolve, reject) => {
+          const dest = fs.createWriteStream(__dirname + '/store/zp downloads/' + filename);
+          res.body.pipe(dest);
+          res.body.on('error', err => {
+            reject(err);
+          });
+          dest.on('finish', () => {
+            resolve('/store/zp downloads/' + filename);
+          });
+          dest.on('error', err => {
+            reject(err);
+          });
+        });
+      });
+      res.download(__dirname + path);
     }
   } else {
     res.sendStatus(400);
