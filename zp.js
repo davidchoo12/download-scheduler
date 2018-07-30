@@ -9,7 +9,6 @@ async function zp(url) {
     if (dlurl.indexOf('undefined') > 0) {
       return undefined;
     }
-    console.log(dlurl);
     return dlurl;
   });
 }

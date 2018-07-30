@@ -104,23 +104,28 @@ app.get('/http*', async (req, res) => {
   } else if (url.match(/(https:\/\/www.mirrored.to\/files\/.+)/g)) {
     const mcResolved = await mc(url);
     if (mcResolved) {
+      console.log('mcResolved: ', mcResolved);
       const path = await fetch(mcResolved)
       .then(res => {
         const filename = decodeURIComponent(res.headers.get('content-disposition')).match(/\[Soulreaperzone\.com\].+/)[0];
+        console.log('filename: ', filename);
         return new Promise((resolve, reject) => {
           const dest = fs.createWriteStream(__dirname + '/store/zp downloads/' + filename);
           res.body.pipe(dest);
           res.body.on('error', err => {
+            console.log('res.body error, ', err);
             reject(err);
           });
           dest.on('finish', () => {
             resolve('/store/zp downloads/' + filename);
           });
           dest.on('error', err => {
+            console.log('dest error, ', err);
             reject(err);
           });
         });
       });
+      console.log('path: ', path);
       res.download(__dirname + path);
     }
   } else {
