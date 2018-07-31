@@ -121,7 +121,7 @@
         <h4>${youtube.channel}</h4>
         <ul>
           ${youtube.videos.map(video => `
-            <li><input type="checkbox" id="${video.id}" value="https://www.youtube.com/watch?v=${video.id}"><a href="https://www.youtube.com/watch?v=${video.id}" target="_blank">${video.title}</a></li>
+            <li><input type="checkbox" id="${video.id}" value="https://youtu.be/${video.id}"><a href="https://youtu.be/${video.id}" target="_blank">${video.title}</a></li>
           `).join('')}
         </ul>
       `).join('');
