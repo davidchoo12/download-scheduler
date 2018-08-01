@@ -88,6 +88,15 @@ app.post('/store/:file', (req, res, next) => {
   fs.writeFileSync(__dirname + '/store/' + req.params.file, req.rawBody);
   res.sendStatus(200);
 });
+app.get('/zp', (req, res) => {
+  const dir = '/store/zp downloads';
+  const folder = __dirname + dir;
+  const files = fs.readdirSync(folder);
+  let filesResult = {};
+  filesResult.files = files.map(file => ({name: file, size: fs.statSync(folder + '/' + file).size}));
+  filesResult.totalSize = filesResult.files.reduce((a, c) => a += c.size, 0);
+  res.send(filesResult);
+});
 app.use('/', express.static(__dirname + '/public'));
 app.get('/http*', async (req, res) => {
   console.log('reached /http*, req.originalUrl:', req.originalUrl);
@@ -120,6 +129,7 @@ app.get('/http*', async (req, res) => {
             fs.readdirSync(__dirname + folder).forEach(file => fs.unlinkSync(__dirname + folder  + '/' + file)); // loop files and delete
             console.log('zp downloads folder size ' + (folderSize / 1000000) + 'MB > 900MB, cleared zp downloads');
           }
+          console.log('downloading ' + filename);
           return new Promise((resolve, reject) => {
             const dest = fs.createWriteStream(__dirname + dir + filename);
             res.body.pipe(dest);
@@ -128,6 +138,7 @@ app.get('/http*', async (req, res) => {
               reject(err);
             });
             dest.on('finish', () => {
+              console.log('download done ' + filename);
               resolve(dir + filename);
             });
             dest.on('error', err => {

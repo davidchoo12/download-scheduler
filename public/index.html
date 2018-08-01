@@ -60,6 +60,8 @@
     <h4>yt.json</h4>
     <textarea id="ytjson-textarea" cols="30" rows="10"></textarea>
     <button id="ytjson-btn">Update</button>
+    <h4>zp downloads</h4>
+    <ul id="zpdownloads-list"></ul>
   </div>
   <script src="Sortable.min.js"></script>
   <script>
@@ -158,6 +160,19 @@
       fetch('/store/yt.json')
       .then(res => res.text())
       .then(body => document.querySelector('#ytjson-textarea').value = body);
+      fetch('/zp')
+      .then(res => res.json())
+      .then(body => {
+        const zpdownloadsListHtml = `
+          <h5>Folder size: ${Math.round(body.totalSize / 1000000)}MB</h5>
+          <ul>
+            ${body.files.map(file => `
+              <li><a download href="/store/zp downloads/${file.name}">${file.name}</a> (${Math.round(file.size / 1000000)}MB)</li>
+            `).join('')}
+          </ul>
+        `;
+        document.querySelector('#zpdownloads-list').innerHTML = zpdownloadsListHtml;
+      });
       document.querySelector('#storefiles').classList.remove('hidden');
     });
     function update(path, content) {

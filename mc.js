@@ -2,10 +2,11 @@ const fetch = require('node-fetch');
 const zp = require('./zp');
 
 async function mc(url) {
-  return await fetch('https://www.mirrored.to/downlink.php', {
+  const fileid = url.match(/\/files\/(.+)(?=\/)/g)[0].slice(7);
+  return await fetch('https://www.mirrored.to/downlink/' + fileid, {
     method: 'POST',
     headers: {'content-type': 'application/x-www-form-urlencoded'},
-    body: 'hostid=15&uid=' + url.match(/\/files\/(.+)(?=\/)/g)[0].slice(7)
+    body: 'hostname=ZippyShare&hostid=15&uid=' + fileid
   })
   .then(res => res.text())
   .then(body => {
