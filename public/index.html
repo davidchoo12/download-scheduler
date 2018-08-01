@@ -164,10 +164,10 @@
       .then(res => res.json())
       .then(body => {
         const zpdownloadsListHtml = `
-          <h5>Folder size: ${Math.round(body.totalSize / 1000000)}MB</h5>
+          <h5>Folder size: ${(body.totalSize / 1048576).toFixed(2)}MB</h5>
           <ul>
             ${body.files.map(file => `
-              <li><a download href="/store/zp downloads/${file.name}">${file.name}</a> (${Math.round(file.size / 1000000)}MB)</li>
+              <li><a download href="/store/zp downloads/${file.name}">${file.name}</a> (${(file.size / 1048576).toFixed(2)}MB)</li>
             `).join('')}
           </ul>
         `;
