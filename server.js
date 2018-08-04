@@ -8,9 +8,14 @@ const yt = require('./yt');
 
 const app = express();
 
-app.get('/links', (req, res) => {
+app.get('/links', async (req, res) => {
   console.log('reached /links, req.originalUrl: ', req.originalUrl);
-  let srzUrls = JSON.parse(fs.readFileSync(__dirname + '/store/srz.json'));
+  const srzJsonGdrive = 'https://drive.google.com/uc?id=1hlydHONBPzhyGFYo6gsacdRzt6_BbX_K&export=download';
+  const ytJsonGdrive = 'https://drive.google.com/uc?id=1n9bMMXY6W20gZ4HlkzRNuKqUpzoneAPc&export=download';
+  // let srzUrlsF = JSON.parse(fs.readFileSync(__dirname + '/store/srz.json'));
+  // let ytUrlsF = JSON.parse(fs.readFileSync(__dirname + '/store/yt.json'));
+  let srzUrls = await fetch(srzJsonGdrive).then(res => res.json()).catch(res.send);
+  let ytUrls = await fetch(ytJsonGdrive).then(res => res.json()).catch(res.send);
   let srzPromises = srzUrls.map(srzUrl =>
     fetch(srzUrl.url)
     .then(resp => resp.text())
@@ -51,7 +56,7 @@ app.get('/links', (req, res) => {
       episodes: e.eps
     }))
   }));
-  let ytUrls = JSON.parse(fs.readFileSync(__dirname + '/store/yt.json'));
+
   let ytPromises = ytUrls.map(ytUrl =>
     fetch(ytUrl)
     .then(resp => resp.json())
@@ -66,7 +71,8 @@ app.get('/links', (req, res) => {
   let ytCombined = Promise.all(ytPromises)
   .then(e => ({youtubes: e}));
   Promise.all([srzCombined, ytCombined])
-  .then(e => res.send({...e[0], ...e[1]}));
+  .then(e => res.send({...e[0], ...e[1]}))
+  .catch(res.send); // catch all except the 2 gdrive fetches
   // fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=UCYzPXprvl5Y-Sf0g4vX-m6g&order=date&key=AIzaSyBpu8hgnXbkqFVWrAvwRUEz7T13ii3I7WM')
   // .then(resp => resp.json())
   // .then(body => {
