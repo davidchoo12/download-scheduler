@@ -17,6 +17,8 @@ app.get('/links', async (req, res) => {
   // let ytUrlsF = JSON.parse(fs.readFileSync(__dirname + '/store/yt.json'));
   let srzUrls = await fetch(srzJsonGdrive).then(res => res.json()).catch(res.send);
   let ytUrls = await fetch(ytJsonGdrive).then(res => res.json()).catch(res.send);
+  console.log('srzUrls', srzUrls);
+  console.log('ytUrls', ytUrls);
   let srzPromises = srzUrls.map(srzUrl =>
     fetch(srzUrl.url)
     .then(resp => resp.text())
@@ -33,6 +35,7 @@ app.get('/links', async (req, res) => {
       let match = body.match(hevcRgx);
       let isHevc = true;
       if (!match) {
+        console.log('!match, body:', body);
         const h264Rgx = /Episode \d+ .*http.+?(?=class="external")/g;
         match = body.match(h264Rgx);
         isHevc = false;
