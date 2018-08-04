@@ -38,6 +38,12 @@ app.get('/links', async (req, res) => {
         console.log('!match, body:', body);
         const h264Rgx = /Episode \d+ .*http.+?(?=class="external")/g;
         match = body.match(h264Rgx);
+        if (!match) { // if no hevc and no h264
+          return {
+            isHevc: false,
+            eps: []
+          };
+        }
         isHevc = false;
       }
       const textBlock = match[0];
