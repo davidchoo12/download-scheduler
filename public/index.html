@@ -110,7 +110,7 @@
     fetch('/links')
     .then(res => res.json())
     .then(body => {
-      let { animes, youtubes } = body;
+      let { animes, youtubes, otherlinks } = body;
       let animeListHtml = animes.map(anime => `
         <h4>${anime.anime}</h4>
         <ul>
@@ -139,6 +139,7 @@
         }
         finalTextareaUpdate();
       }));
+      document.querySelector('#batchdl-textarea').value = otherlinks;
     });
 
     document.querySelector('#reset-btn').addEventListener('click', () => {
