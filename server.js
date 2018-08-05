@@ -10,13 +10,17 @@ const app = express();
 
 app.get('/links', async (req, res) => {
   console.log('reached /links, req.originalUrl: ', req.originalUrl);
-  const srzJsonGdrive = 'https://drive.google.com/uc?id=1hlydHONBPzhyGFYo6gsacdRzt6_BbX_K&export=download';
-  const ytJsonGdrive = 'https://drive.google.com/uc?id=1n9bMMXY6W20gZ4HlkzRNuKqUpzoneAPc&export=download';
+  // const srzJsonGdrive = 'https://drive.google.com/uc?id=1hlydHONBPzhyGFYo6gsacdRzt6_BbX_K&export=download';
+  // const ytJsonGdrive = 'https://drive.google.com/uc?id=1n9bMMXY6W20gZ4HlkzRNuKqUpzoneAPc&export=download';
+  const srzytJsonGdrive = 'https://drive.google.com/uc?id=1x82UABI2j4NAf3G2BSZqY3_BrPOftgmW&export=download';
   const otherlinkstxtGdrive = 'https://drive.google.com/uc?id=1Go7T001x4t4aTGHqP0BvLtuJNX7QS3pP&export=download';
   // let srzUrlsF = JSON.parse(fs.readFileSync(__dirname + '/store/srz.json'));
   // let ytUrlsF = JSON.parse(fs.readFileSync(__dirname + '/store/yt.json'));
-  let srzUrls = await fetch(srzJsonGdrive).then(res => res.json()).catch(res.send);
-  let ytUrls = await fetch(ytJsonGdrive).then(res => res.json()).catch(res.send);
+  // let srzUrls = await fetch(srzJsonGdrive).then(resp => resp.json()).catch(err => []);
+  // let ytUrls = await fetch(ytJsonGdrive).then(resp => resp.json()).catch(err => []);
+  let srzyt = await fetch(srzytJsonGdrive).then(resp => resp.json()).catch(err => ({srz: [], yt: []}));
+  let srzUrls = srzyt.srz;
+  let ytUrls = srzyt.yt;
   console.log('srzUrls', srzUrls);
   console.log('ytUrls', ytUrls);
   let srzPromises = srzUrls.map(srzUrl =>
@@ -55,8 +59,8 @@ app.get('/links', async (req, res) => {
       };
     })
     .catch(err => {
-      console.log(err);
-    })// end of fetch
+      console.log('srzPromises catch', err);
+    }) // end of fetch
   ); // end of srzPromises
   let srzCombined = Promise.all(srzPromises)
   .then(results => ({
@@ -65,7 +69,10 @@ app.get('/links', async (req, res) => {
       isHevc: e.isHevc,
       episodes: e.eps
     }))
-  }));
+  }))
+  .catch(err => {
+    console.log('srzCombined catch', err);
+  }); // end of srzCombined
 
   let ytPromises = ytUrls.map(ytUrl =>
     fetch(ytUrl)
@@ -80,10 +87,12 @@ app.get('/links', async (req, res) => {
   ); // end of ytPromises
   let ytCombined = Promise.all(ytPromises)
   .then(e => ({youtubes: e}));
-  let otherlinkstxtFetch = fetch(otherlinkstxtGdrive).then(resp => resp.text());
+  let otherlinkstxtFetch = fetch(otherlinkstxtGdrive).then(resp => resp.text()).catch(err => '');
   Promise.all([srzCombined, ytCombined, otherlinkstxtFetch])
   .then(e => res.send({...e[0], ...e[1], otherlinks: e[2]}))
-  .catch(res.send); // catch all except the 2 gdrive fetches
+  .catch(err => {
+    console.log('final Promise.all catch', err);
+  });
   // fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=UCYzPXprvl5Y-Sf0g4vX-m6g&order=date&key=AIzaSyBpu8hgnXbkqFVWrAvwRUEz7T13ii3I7WM')
   // .then(resp => resp.json())
   // .then(body => {
