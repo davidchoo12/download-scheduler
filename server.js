@@ -77,13 +77,19 @@ app.get('/links', async (req, res) => {
   let ytPromises = ytUrls.map(ytUrl =>
     fetch(ytUrl)
     .then(resp => resp.json())
-    .then(body => ({
-      channel: body.items[0].snippet.channelTitle,
-      videos: body.items.map(e => ({
-        id: e.id.videoId,
-        title: e.snippet.title
-      }))
-    })) // end of fetch
+    .then(body => {
+      if (body.error) {
+        console.log('ytUrl fetch body contains error', ytUrl, body.error.message);
+        return { channel: 'error with youtube api', videos: [] };
+      }
+      return {
+        channel: body.items[0].snippet.channelTitle,
+        videos: body.items.map(e => ({
+          id: e.id.videoId,
+          title: e.snippet.title
+        }))
+      };
+    }) // end of fetch
   ); // end of ytPromises
   let ytCombined = Promise.all(ytPromises)
   .then(e => ({youtubes: e}));
