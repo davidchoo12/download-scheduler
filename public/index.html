@@ -11,6 +11,12 @@
     body {
       width: 90%;
     }
+    .anime-header h4 {
+      margin-bottom: 0.5em;
+    }
+    .anime-header .last-updated {
+      font-size: 0.9em;
+    }
     ul {
       position: relative;
       padding: 0;
@@ -111,14 +117,34 @@
     .then(res => res.json())
     .then(body => {
       let { animes, youtubes, otherlinks } = body;
-      let animeListHtml = animes.map(anime => `
-        <h4>${anime.anime}</h4>
+      let animeListHtml = animes.map(anime => {
+        const lastUpdatedString = new Date(anime.lastUpdated).toLocaleString('en-GB',{
+          timeZone: 'Asia/Singapore',
+          weekday: 'short',
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          hour12: true,
+          timeZoneName: 'short'
+        }); // "Tue, 04/12/2018, 8:30:01 am GMT+8"
+        return `
+        <div class="anime-header">
+          <h4>${anime.anime}</h4>
+          <span class="last-updated">${lastUpdatedString}</span>
+          ${anime.isHevc ? '' :
+            '<br><span>not HEVC</span>'
+          }
+        </div>
         <ul>
           ${anime.episodes.map(episode => `
             <li><a href="${episode.url}" target="_blank">${episode.episode}</a></li>
           `).join('')}
         </ul>
-      `).join('');
+        `;
+      }).join('');
       let youtubeListHtml = youtubes.map(youtube => `
         <h4>${youtube.channel}</h4>
         <ul>

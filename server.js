@@ -27,6 +27,11 @@ app.get('/links', async (req, res) => {
     fetch(srzUrl.url)
     .then(resp => resp.text())
     .then(body => {
+      // get last updated date
+      const dateRgx = /datetime=".+?"/g;
+      const dateMatch = body.match(dateRgx)[0];
+      const lastUpdated = new Date(dateMatch.slice('datetime="'.length, -1)); // -1 for last "
+
       // lookbehind (?<=...) not yet supported in node v8.9.4
       // const r = /(?<=Download HEVC.*)(Episode \d+).+?(http:\/\/.*?)(?=" target="_blank" rel="nofollow" class="external">720p HEVC)/g;
       // let match, episodes, urls;
@@ -36,7 +41,7 @@ app.get('/links', async (req, res) => {
       // }
       // because lookbehind not supported, find the block of text, then find again inside the block
       const hevcRgx = /(?:Download HEVC.*).*(?=720p HEVC)/g;
-      let match = body.match(hevcRgx);
+      match = body.match(hevcRgx);
       let isHevc = true;
       if (!match) {
         const h264Rgx = /Episode \d+ .*http.+?(?=class="external")/g;
@@ -45,6 +50,7 @@ app.get('/links', async (req, res) => {
           console.log('srz fail, no hevc and h264');
           return {
             isHevc: false,
+            lastUpdated: lastUpdated,
             eps: []
           };
         }
@@ -55,6 +61,7 @@ app.get('/links', async (req, res) => {
       const urls = textBlock.match(/http.+?(?=")/g); // ["http://ouo.press/asdf"]
       return {
         isHevc: isHevc,
+        lastUpdated: lastUpdated,
         eps: episodes.map((e, i) => ({ episode: e, url: urls[i] }))
       };
     })
@@ -67,6 +74,7 @@ app.get('/links', async (req, res) => {
     animes: results.map((e, i) => ({
       anime: srzUrls[i].anime,
       isHevc: e.isHevc,
+      lastUpdated: e.lastUpdated,
       episodes: e.eps
     }))
   }))
