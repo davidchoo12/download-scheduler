@@ -187,7 +187,8 @@ app.get('/http*', async (req, res) => {
             });
           });
         }
-      });
+      })
+      .catch(err => res.status(500).send(err));
       console.log('path: ', path);
       res.download(__dirname + path);
     }
