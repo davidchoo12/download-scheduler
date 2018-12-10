@@ -19,6 +19,10 @@ async function zp(url) {
       return undefined;
     }
     return dlurl;
+  })
+  .catch(err => {
+    console.error('zp error', err);
+    return err;
   });
 }
 

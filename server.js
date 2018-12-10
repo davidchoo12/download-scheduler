@@ -152,6 +152,15 @@ app.get('/http*', async (req, res) => {
     }
   } else if (url.match(/(https:\/\/www.mirrored.to\/files\/.+)/g)) {
     const mcResolved = await mc(url);
+    if (mcResolved.toString().toLowerCase().includes('error')) {
+      console.error('mcResolved error', mcResolved);
+      return res.status(500).send(
+        mcResolved.stack
+          .replace(/[\u00A0-\u9999<>\&]/gim, i => '&#'+i.charCodeAt(0)+';') // encode html entities (< = &#60; and > = &#62;)
+          .replace(/ /g, '&nbsp;') // encode space char html entity
+          .replace(/\n/g, '<br>') // replace new line with html line break
+      );
+    }
     if (mcResolved) {
       console.log('mcResolved: ', mcResolved);
       const dir = '/store/zp downloads/';

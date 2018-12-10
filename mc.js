@@ -14,6 +14,10 @@ async function mc(url) {
       return zp(body.match(/http.+zippyshare.com.+html/g)[0]);
     else
       return undefined;
+  })
+  .catch(err => {
+    console.error('mc error', err);
+    return err;
   });
 }
 
