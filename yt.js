@@ -19,22 +19,22 @@ async function yt(url) {
         return 'body.url is undefined';
       }
       let json;
-      if (body.url.find(e => e.text.includes('(720p)'))) {
-       json = body.url.find(e => e.text.includes('(720p)'));
-      } else if (body.url.find(e => e.text.includes('(720p), 60fps'))) {
-       json = body.url.find(e => e.text.includes('(720p), 60fps'));
+      // if (body.url.find(e => e.text.includes('(720p)'))) {
+      //   json = body.url.find(e => e.text.includes('(720p)'));
+      // } else if (body.url.find(e => e.text.includes('(720p), 60fps'))) {
+      //   json = body.url.find(e => e.text.includes('(720p), 60fps'));
       // } else {
       //   console.log('No 720p available for ' + u + ' :\n');
       //   body.url.forEach(e => console.log(e.text + '\n'));
       //   return;
       // }
-      } else if (body.url.find(e => e.text.includes('(3GP)'))) {
+      if (body.url.find(e => e.text.includes('(3GP)'))) {
         json = body.url.find(e => e.text.includes('(3GP)'));
       } else {
         // console.log('No 3GP available for ' + url + ' :\n');
         body.url.forEach(e => console.log(e.text + '\n'));
-        // return 'no 3gp available :(';
-        return 'no 720p nor 720p 60fps nor 3gp available :(';
+        return 'no 3gp available :(';
+        // return 'no 720p nor 720p 60fps nor 3gp available :(';
       }
       console.log('URL before replace:\n' + json.url);
       url = json.url.replace(/&#.*/g, '&&title=' + filename); // replace everything from '&#'
