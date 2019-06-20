@@ -43,9 +43,12 @@ app.get('/links', async (req, res) => {
       const hevcRgx = /(?:Download HEVC.*).*(?=720p HEVC)/g;
       match = body.match(hevcRgx);
       let isHevc = true;
-      if (!match) {
+      if (!match || srzUrl.useH264) {
         const h264Rgx = /Episode \d+ .*http.+?(?=class="external")/g;
         match = body.match(h264Rgx);
+        if (srzUrl.useH264 && match[0].match(hevcRgx)) { // the h264Rgx will also include hevc links, so need to remove
+          match[0] = match[0].substring(0, match[0].search('Download HEVC'));
+        }
         if (!match) { // if no hevc and no h264
           console.log('srz fail, no hevc and h264');
           return {
