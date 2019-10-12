@@ -28,7 +28,7 @@ app.get('/links', async (req, res) => {
     .then(resp => resp.text())
     .then(body => {
       // get last updated date
-      const dateRgx = /datetime=".+?"/g;
+      const dateRgx = /datetime=.+?>/;
       const dateMatch = body.match(dateRgx)[0];
       const lastUpdated = new Date(dateMatch.slice('datetime="'.length, -1)); // -1 for last "
 
@@ -44,7 +44,7 @@ app.get('/links', async (req, res) => {
       match = body.match(hevcRgx);
       let isHevc = true;
       if (!match || srzUrl.useH264) {
-        const h264Rgx = /Episode \d+ .*http.+?(?=class="external")/g;
+        const h264Rgx = /Episode \d+ .*http.+?(?=class=external)/g;
         match = body.match(h264Rgx);
         if (srzUrl.useH264 && match[0].match(hevcRgx)) { // the h264Rgx will also include hevc links, so need to remove
           match[0] = match[0].substring(0, match[0].search('Download HEVC'));
@@ -61,7 +61,7 @@ app.get('/links', async (req, res) => {
       }
       const textBlock = match[0];
       const episodes = textBlock.match(/Episode \d+/g); // ["Episode 01"]
-      const urls = textBlock.match(/http.+?(?=")/g); // ["http://ouo.press/asdf"]
+      const urls = textBlock.match(/http.+?(?= )/g); // ["http://ouo.press/asdf"]
       return {
         isHevc: isHevc,
         lastUpdated: lastUpdated,
