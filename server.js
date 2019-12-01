@@ -14,6 +14,7 @@ app.get('/links', async (req, res) => {
   // const ytJsonGdrive = 'https://drive.google.com/uc?id=1n9bMMXY6W20gZ4HlkzRNuKqUpzoneAPc&export=download';
   const srzytJsonGdrive = 'https://drive.google.com/uc?id=1x82UABI2j4NAf3G2BSZqY3_BrPOftgmW&export=download';
   const otherlinkstxtGdrive = 'https://drive.google.com/uc?id=1Go7T001x4t4aTGHqP0BvLtuJNX7QS3pP&export=download';
+  const sznDbCsv = 'https://docs.google.com/spreadsheets/d/1aB4PB2e5We7FC2qSM3umg3-7KmCxJjiskOubc-qo724/export?format=csv&id=1aB4PB2e5We7FC2qSM3umg3-7KmCxJjiskOubc-qo724&gid=0';
   // let srzUrlsF = JSON.parse(fs.readFileSync(__dirname + '/store/srz.json'));
   // let ytUrlsF = JSON.parse(fs.readFileSync(__dirname + '/store/yt.json'));
   // let srzUrls = await fetch(srzJsonGdrive).then(resp => resp.json()).catch(err => []);
@@ -29,8 +30,14 @@ app.get('/links', async (req, res) => {
     .then(body => {
       // get last updated date
       const dateRgx = /datetime=.+?>/;
-      const dateMatch = body.match(dateRgx)[0];
-      const lastUpdated = new Date(dateMatch.slice('datetime="'.length, -1)); // -1 for last "
+      let dateMatch = body.match(dateRgx);
+      let lastUpdated = 'failed to find date';
+      if (dateMatch) {
+        dateMatch = dateMatch[0];
+        lastUpdated = new Date(dateMatch.slice('datetime="'.length, -1)); // -1 for last "
+      } else {
+        console.log('failed to match date, request body:', body);
+      }
 
       // lookbehind (?<=...) not yet supported in node v8.9.4
       // const r = /(?<=Download HEVC.*)(Episode \d+).+?(http:\/\/.*?)(?=" target="_blank" rel="nofollow" class="external">720p HEVC)/g;
