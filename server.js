@@ -24,61 +24,91 @@ app.get('/links', async (req, res) => {
   let ytUrls = srzyt.yt;
   console.log('srzUrls', srzUrls);
   console.log('ytUrls', ytUrls);
-  let srzPromises = srzUrls.map(srzUrl =>
-    fetch(srzUrl.url)
-    .then(resp => resp.text())
-    .then(body => {
-      // get last updated date
-      const dateRgx = /datetime=.+?>/;
-      let dateMatch = body.match(dateRgx);
-      let lastUpdated = 'failed to find date';
-      if (dateMatch) {
-        dateMatch = dateMatch[0];
-        lastUpdated = new Date(dateMatch.slice('datetime="'.length, -1)); // -1 for last "
-      } else {
-        console.log('failed to match date, request body:', body);
-      }
+  let srzPromises = srzUrls.map(srzUrl => {
+    if (srzUrl.url.match(/.+anime2enjoy.+/)) {
+      return fetch(srzUrl.url)
+      .then(resp => resp.text())
+      .then(body => {
+        // get last updated date
+        const dateRgx = /Posted on [^>]+>([^<]*)/;
+        let dateMatch = body.match(dateRgx);
+        let lastUpdated = 'failed to find date';
+        if (dateMatch) {
+          dateMatch = dateMatch[1];
+          lastUpdated = new Date(dateMatch);
+        } else {
+          console.log('failed to match date, request body:', body);
+        }
+        const episodes = body.match(/(?<=modal-title">Download )(.+)(?=<\/h4>)/g).reverse(); // ['Episode 01'] reversed so that newer ones appear on top
+        const urls = body.match(/(http[s]:\/\/.+)(?=" target="_blank">)/g).reverse(); // ['https://ouo.io/asdf']
+        console.log(`episodes ${episodes} urls ${urls}`);
+        return {
+          isHevc: true,
+          lastUpdated: lastUpdated,
+          eps: episodes.map((e, i) => ({ episode: e, url: urls[i] }))
+        };
+      })
+      .catch(err => {
+        console.log('srzPromises catch', err);
+      }) // end of fetch
+    } else if (srzUrl.url.match(/.+soulreaperzone.+/)) {
+      return fetch(srzUrl.url)
+      .then(resp => resp.text())
+      .then(body => {
+        // get last updated date
+        const dateRgx = /datetime=.+?>/;
+        let dateMatch = body.match(dateRgx);
+        let lastUpdated = 'failed to find date';
+        if (dateMatch) {
+          dateMatch = dateMatch[0];
+          lastUpdated = new Date(dateMatch.slice('datetime="'.length, -1)); // -1 for last "
+        } else {
+          console.log('failed to match date, request body:', body);
+        }
 
-      // lookbehind (?<=...) not yet supported in node v8.9.4
-      // const r = /(?<=Download HEVC.*)(Episode \d+).+?(http:\/\/.*?)(?=" target="_blank" rel="nofollow" class="external">720p HEVC)/g;
-      // let match, episodes, urls;
-      // while (match = r.exec(body)) {
-      //   episodes.push(match[1]);
-      //   urls.push(match[2]);
-      // }
-      // because lookbehind not supported, find the block of text, then find again inside the block
-      const hevcRgx = /(?:Download HEVC.*).*(?=720p HEVC)/g;
-      match = body.match(hevcRgx);
-      let isHevc = true;
-      if (!match || srzUrl.useH264) {
-        const h264Rgx = /Episode \d+ .*http.+?(?=class=external)/g;
-        match = body.match(h264Rgx);
-        if (srzUrl.useH264 && match[0].match(hevcRgx)) { // the h264Rgx will also include hevc links, so need to remove
-          match[0] = match[0].substring(0, match[0].search('Download HEVC'));
+        // lookbehind (?<=...) not yet supported in node v8.9.4
+        // const r = /(?<=Download HEVC.*)(Episode \d+).+?(http:\/\/.*?)(?=" target="_blank" rel="nofollow" class="external">720p HEVC)/g;
+        // let match, episodes, urls;
+        // while (match = r.exec(body)) {
+        //   episodes.push(match[1]);
+        //   urls.push(match[2]);
+        // }
+        // because lookbehind not supported, find the block of text, then find again inside the block
+        const hevcRgx = /(?:Download HEVC.*).*(?=720p HEVC)/g;
+        match = body.match(hevcRgx);
+        let isHevc = true;
+        if (!match || srzUrl.useH264) {
+          const h264Rgx = /Episode \d+ .*link="external"/g;
+          match = body.match(h264Rgx);
+          if (srzUrl.useH264 && match[0].match(hevcRgx)) { // the h264Rgx will also include hevc links, so need to remove
+            match[0] = match[0].substring(0, match[0].search('Download HEVC'));
+          }
+          if (!match) { // if no hevc and no h264
+            console.log('srz fail, no hevc and h264');
+            return {
+              isHevc: false,
+              lastUpdated: lastUpdated,
+              eps: []
+            };
+          }
+          isHevc = false;
         }
-        if (!match) { // if no hevc and no h264
-          console.log('srz fail, no hevc and h264');
-          return {
-            isHevc: false,
-            lastUpdated: lastUpdated,
-            eps: []
-          };
-        }
-        isHevc = false;
-      }
-      const textBlock = match[0];
-      const episodes = textBlock.match(/Episode \d+/g); // ["Episode 01"]
-      const urls = textBlock.match(/http.+?(?= )/g); // ["http://ouo.press/asdf"]
-      return {
-        isHevc: isHevc,
-        lastUpdated: lastUpdated,
-        eps: episodes.map((e, i) => ({ episode: e, url: urls[i] }))
-      };
-    })
-    .catch(err => {
-      console.log('srzPromises catch', err);
-    }) // end of fetch
-  ); // end of srzPromises
+        const textBlock = match[0];
+        const episodes = textBlock.match(/Episode \d+/g); // ["Episode 01"]
+        const urls = textBlock.match(/http.+?(?=[ "])/g); // ["http://ouo.press/asdf"]
+        return {
+          isHevc: isHevc,
+          lastUpdated: lastUpdated,
+          eps: episodes.map((e, i) => ({ episode: e, url: urls[i] }))
+        };
+      })
+      .catch(err => {
+        console.log('srzPromises catch', err);
+      }) // end of fetch
+    } else {
+      console.log(`srzUrl.url doesnt contain anime2enjoy or soulreaperzone: ${srzUrl.url}`)
+    }
+  }); // end of srzPromises
   let srzCombined = Promise.all(srzPromises)
   .then(results => ({
     animes: results.map((e, i) => ({
