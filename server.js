@@ -4,6 +4,7 @@ const fetch = require('node-fetch');
 const http = require('http');
 const fs = require('fs');
 const mc = require('./mc');
+const mediafire = require('./mediafire');
 const yt = require('./yt');
 
 const app = express();
@@ -241,12 +242,16 @@ app.get('/http*', async (req, res) => {
       console.log('path: ', path);
       res.download(__dirname + path);
     }
+  } else if (url.match(/(https?:\/\/www.mediafire.com\/file\/.+)/g)) {
+    let mediafireDlUrl = await mediafire(url);
+    res.redirect(mediafireDlUrl);
   } else {
     res.sendStatus(400);
   }
 });
-app.listen(process.env.PORT || 8080);
-console.log('express server running');
+port = process.env.PORT || 8080;
+app.listen(port);
+console.log('express server running: http://localhost:' + port);
 
 
 // function youtube(res, u) {
