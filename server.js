@@ -5,6 +5,7 @@ const http = require('http');
 const fs = require('fs');
 const mc = require('./mc');
 const mediafire = require('./mediafire');
+const zp = require('./zp');
 const yt = require('./yt');
 
 const app = express();
@@ -245,6 +246,9 @@ app.get('/http*', async (req, res) => {
   } else if (url.match(/(https?:\/\/www.mediafire.com\/file\/.+)/g)) {
     let mediafireDlUrl = await mediafire(url);
     res.redirect(mediafireDlUrl);
+  } else if (url.match(/(https?:\/\/www.*.zippyshare.com\/.+)/g)) {
+    let zippyshareDlUrl = await zp(url);
+    res.redirect(zippyshareDlUrl);
   } else {
     res.sendStatus(400);
   }
