@@ -205,41 +205,8 @@ app.get('/http*', async (req, res) => {
     }
     if (mcResolved) {
       console.log('mcResolved: ', mcResolved);
-      const dir = '/store/zp downloads/';
-      const path = await fetch(mcResolved)
-      .then(res => {
-        const filename = decodeURIComponent(res.headers.get('content-disposition')).match(/\[Soulreaperzone\.com\].+/)[0];
-        console.log('filename: ', filename);
-        if (fs.existsSync(__dirname + dir + filename)) {
-          console.log('file exists: ', filename);
-          return '/store/zp downloads/' + filename;
-        } else {
-          const folder = dir.replace(/\/$/, '');
-          const folderSize = fs.readdirSync(__dirname + folder).map(file => fs.statSync(__dirname + folder + '/' + file).size).reduce((a, c) => a += c, 0);
-          if (folderSize > 900000000) { // heroku max size 1GB, so if exceeds 900MB, clear folder
-            fs.readdirSync(__dirname + folder).forEach(file => fs.unlinkSync(__dirname + folder  + '/' + file)); // loop files and delete
-            console.log('zp downloads folder size ' + (folderSize / 1000000) + 'MB > 900MB, cleared zp downloads');
-          }
-          console.log('downloading ' + filename);
-          return new Promise((resolve, reject) => {
-            const dest = fs.createWriteStream(__dirname + dir + filename);
-            res.body.pipe(dest);
-            res.body.on('error', err => {
-              console.log('res.body error, ', err);
-              reject(err);
-            });
-            dest.on('finish', () => {
-              console.log('download done ' + filename);
-              resolve(dir + filename);
-            });
-            dest.on('error', err => {
-              console.log('dest error, ', err);
-              reject(err);
-            });
-          });
-        }
-      })
-      .catch(err => res.status(500).send(err));
+      const path = await downloadFile(mcResolved)
+        .catch(err => res.status(500).send(err));
       console.log('path: ', path);
       res.download(__dirname + path);
     }
@@ -248,7 +215,10 @@ app.get('/http*', async (req, res) => {
     res.redirect(mediafireDlUrl);
   } else if (url.match(/(https?:\/\/www.*.zippyshare.com\/.+)/g)) {
     let zippyshareDlUrl = await zp(url);
-    res.redirect(zippyshareDlUrl);
+    const path = await downloadFile(zippyshareDlUrl)
+      .catch(err => res.status(500).send(err));
+    console.log('path: ', path);
+    res.download(__dirname + path);
   } else {
     res.sendStatus(400);
   }
@@ -257,7 +227,48 @@ port = process.env.PORT || 8080;
 app.listen(port);
 console.log('express server running: http://localhost:' + port);
 
-
+// download file locally first then offer the downloaded file as response
+// to be used for zippyshare where redirecting the dl url doesn't work, probably cos the dlurl is only valid for the IP address that requested it first
+async function downloadFile(url) {
+  const dir = '/store/zp downloads/';
+  const path = await fetch(url)
+  .then(res => {
+    // eg content-disposition: attachment; filename*=UTF-8''%5bAnimE2Enjoy.Com%5d%20BFox%20-%20%28M%29%20%5bHS-S2O%5d.a2e
+    // after decodeURIComponent: attachment; filename*=UTF-8''[AnimE2Enjoy.Com] BFox - (M) [HS-S2O].a2e
+    // after regex match: [AnimE2Enjoy.Com] BFox - (M) [HS-S2O].a2e
+    const filename = decodeURIComponent(res.headers.get('content-disposition')).match(/[^']*$/)[0];
+    console.log('filename: ', filename);
+    if (fs.existsSync(__dirname + dir + filename)) {
+      console.log('file exists: ', filename);
+      return '/store/zp downloads/' + filename;
+    } else {
+      const folder = dir.replace(/\/$/, '');
+      const folderSize = fs.readdirSync(__dirname + folder).map(file => fs.statSync(__dirname + folder + '/' + file).size).reduce((a, c) => a += c, 0);
+      if (folderSize > 900000000) { // heroku max size 1GB, so if exceeds 900MB, clear folder
+        fs.readdirSync(__dirname + folder).forEach(file => fs.unlinkSync(__dirname + folder  + '/' + file)); // loop files and delete
+        console.log('zp downloads folder size ' + (folderSize / 1000000) + 'MB > 900MB, cleared zp downloads');
+      }
+      console.log('downloading ' + filename);
+      return new Promise((resolve, reject) => {
+        const dest = fs.createWriteStream(__dirname + dir + filename);
+        res.body.pipe(dest);
+        res.body.on('error', err => {
+          console.log('res.body error, ', err);
+          reject(err);
+        });
+        dest.on('finish', () => {
+          console.log('download done ' + filename);
+          resolve(dir + filename);
+        });
+        dest.on('error', err => {
+          console.log('dest error, ', err);
+          reject(err);
+        });
+      });
+    }
+  });
+  return path;
+}
 // function youtube(res, u) {
 //   request.post({
 //     url: 'https://www.clipconverter.cc/check.php',
