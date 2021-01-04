@@ -132,7 +132,7 @@
         }); // "Tue, 04/12/2018, 8:30:01 am GMT+8"
         return `
         <div class="anime-header">
-          <h4>${anime.anime}</h4>
+          <h4>${anime.anime} - <a href="${anime.url}">link</a></h4>
           <span class="last-updated">${lastUpdatedString}</span>
           ${anime.isHevc ? '' :
             '<br><span>not HEVC</span>'

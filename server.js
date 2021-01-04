@@ -115,6 +115,7 @@ app.get('/links', async (req, res) => {
   .then(results => ({
     animes: results.map((e, i) => ({
       anime: srzUrls[i].anime,
+      url: srzUrls[i].url,
       isHevc: e.isHevc,
       lastUpdated: e.lastUpdated,
       episodes: e.eps
