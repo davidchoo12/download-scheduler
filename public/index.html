@@ -153,7 +153,8 @@
           `).join('')}
         </ul>
       `).join('');
-      document.querySelector('#animes').innerHTML = animeListHtml;
+      let animeCountHtml = `<span>Total animes: ${animes.length}</span>`;
+      document.querySelector('#animes').innerHTML = animeListHtml + animeCountHtml;
       document.querySelector('#youtubes').innerHTML = youtubeListHtml;
       document.querySelectorAll('input[type="checkbox"]').forEach(el => el.addEventListener('change', e => {
         if(e.target.checked) {
