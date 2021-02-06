@@ -63,7 +63,7 @@ app.get('/links', async (req, res) => {
         let lastUpdated = 'failed to find date';
         if (dateMatch) {
           dateMatch = dateMatch[0];
-          lastUpdated = new Date(dateMatch.slice('datetime="'.length, -1)); // -1 for last "
+          lastUpdated = new Date(dateMatch.slice('datetime='.length, -1)); // -1 for last >
         } else {
           console.log('failed to match date, request body:', body);
         }
