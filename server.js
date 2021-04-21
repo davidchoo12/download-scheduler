@@ -21,7 +21,12 @@ app.get('/links', async (req, res) => {
   // let ytUrlsF = JSON.parse(fs.readFileSync(__dirname + '/store/yt.json'));
   // let srzUrls = await fetch(srzJsonGdrive).then(resp => resp.json()).catch(err => []);
   // let ytUrls = await fetch(ytJsonGdrive).then(resp => resp.json()).catch(err => []);
-  let srzyt = await fetch(srzytJsonGdrive).then(resp => resp.json()).catch(err => ({srz: [], yt: []}));
+  const fetchOpts = {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0'
+    }
+  };
+  let srzyt = await fetch(srzytJsonGdrive, fetchOpts).then(resp => resp.json()).catch(err => ({srz: [], yt: []}));
   let srzUrls = srzyt.srz;
   let ytUrls = srzyt.yt;
   console.log('srzUrls', srzUrls);
@@ -144,7 +149,7 @@ app.get('/links', async (req, res) => {
   ); // end of ytPromises
   let ytCombined = Promise.all(ytPromises)
   .then(e => ({youtubes: e}));
-  let otherlinkstxtFetch = fetch(otherlinkstxtGdrive).then(resp => resp.text()).catch(err => '');
+  let otherlinkstxtFetch = fetch(otherlinkstxtGdrive, fetchOpts).then(resp => resp.text()).catch(err => '');
   Promise.all([srzCombined, ytCombined, otherlinkstxtFetch])
   .then(e => res.send({...e[0], ...e[1], otherlinks: e[2]}))
   .catch(err => {
