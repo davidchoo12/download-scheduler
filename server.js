@@ -46,8 +46,8 @@ app.get('/links', async (req, res) => {
         } else {
           console.log('failed to match date, request body:', body);
         }
-        const episodes = body.match(/(?<=modal-title">Download )(.+)(?=<\/h4>)/g).reverse(); // ['Episode 01'] reversed so that newer ones appear on top
-        const urls = body.match(/(?<=data-href=")(http[s]:\/\/[^"]+)/g).reverse(); // ['https://ouo.io/asdf']
+        const episodes = body.match(/(?<=modal-title">Download )(.+)(?=<\/h4>)/g)?.reverse() || []; // ['Episode 01'] reversed so that newer ones appear on top
+        const urls = body.match(/(?<=data-href=")(http[s]:\/\/[^"]+)/g)?.reverse() || []; // ['https://ouo.io/asdf']
         console.log(`episodes ${episodes} urls ${urls}`);
         return {
           isHevc: true,
