@@ -44,15 +44,32 @@ app.get('/links', async (req, res) => {
           dateMatch = dateMatch[1];
           lastUpdated = new Date(dateMatch);
         } else {
-          console.log('failed to match date, request body:', body);
+          console.log('failed to match date, url:', srzUrl.url);
         }
-        const episodes = body.match(/(?<=modal-title">Download )(.+)(?=<\/h4>)/g)?.reverse() || []; // ['Episode 01'] reversed so that newer ones appear on top
-        const urls = body.match(/(?<=data-href=")(http[s]:\/\/[^"]+)/g)?.reverse() || []; // ['https://ouo.io/asdf']
-        console.log(`episodes ${episodes} urls ${urls}`);
+        // const episodes = body.match(/(?<=modal-title">Download )(.+)(?=<\/h4>)/g)?.reverse() || []; // ['Episode 01'] reversed so that newer ones appear on top
+        // const urls = body.match(/(?<=data-href=")(http[s]:\/\/[^"]+)/g)?.reverse() || []; // ['https://ouo.io/asdf']
+        let episodes = [];
+        let epIndexes = [];
+        let epIndex = body.indexOf('modal-title">Download ');
+        while (epIndex > -1) {
+          epIndexes.push(epIndex);
+          epIndex = body.indexOf('modal-title">Download ', epIndex+1);
+        }
+        for (const [i, epIndex] of epIndexes.entries()) {
+          const epModal = body.substring(epIndex, i < epIndexes.length - 1 ? epIndexes[i+1] : undefined);
+          const epText = epModal.match(/(?<=modal-title">Download )(.+)(?=<\/h4>)/g)[0];
+          const epUrls = epModal.match(/(?<=data-href=")(http[s]:\/\/[^"]+)/g);
+          const epLinkTexts = epModal.match(/([^>]+?)(?=<\/a>)/g);
+          episodes.unshift({ // prepend so that newer ones appear on top
+            episode: epText,
+            urls: epUrls.map((e, i) => ({ url: e, text: epLinkTexts[i]}))
+          });
+        }
+        console.log(`episodes ${JSON.stringify(episodes)}`);
         return {
           isHevc: true,
           lastUpdated: lastUpdated,
-          eps: episodes.map((e, i) => ({ episode: e, url: urls[i] }))
+          eps: episodes
         };
       })
       .catch(err => {
@@ -70,7 +87,7 @@ app.get('/links', async (req, res) => {
           dateMatch = dateMatch[0];
           lastUpdated = new Date(dateMatch.slice('datetime='.length, -1)); // -1 for last >
         } else {
-          console.log('failed to match date, request body:', body);
+          console.log('failed to match date, url:', srzUrl.url);
         }
 
         // lookbehind (?<=...) not yet supported in node v8.9.4

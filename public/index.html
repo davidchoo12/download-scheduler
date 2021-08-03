@@ -139,9 +139,13 @@
           }
         </div>
         <ul>
-          ${anime.episodes.map(episode => `
-            <li><a href="${episode.url}" target="_blank">${episode.episode}</a></li>
-          `).join('')}
+          ${anime.episodes.map(episode => {
+            if (episode.url) {
+              return `<li><a href="${episode.url}" target="_blank">${episode.episode}</a></li>`;
+            } else if (episode.urls) {
+              return `<li>${episode.urls.map(url => `<a href="${url.url}" target="_blank">${episode.episode + url.text}</a>`).join('&nbsp;')}</li>`;
+            }
+          }).join('')}
         </ul>
         `;
       }).join('');
