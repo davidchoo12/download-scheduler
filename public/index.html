@@ -75,7 +75,7 @@
     const finalTextareaUpdate = () => {
       let urlList = '';
       document.querySelectorAll('.item-text').forEach(el => {
-        urlList += 'https://download-scheduler.herokuapp.com/' + el.innerText + '\n'; // textarea ignores \r, so just use \n
+        urlList += el.innerText + '\n'; // textarea ignores \r, so just use \n
       });
       document.querySelector('#final-textarea').value = urlList;
     };
@@ -141,9 +141,9 @@
         <ul>
           ${anime.episodes.map(episode => {
             if (episode.url) {
-              return `<li><a href="${episode.url}" target="_blank">${episode.episode}</a></li>`;
+              return `<li><input type="checkbox" value="${episode.url}><a href="${episode.url}" target="_blank">${episode.episode}</a></input></li>`;
             } else if (episode.urls) {
-              return `<li>${episode.urls.map(url => `<a href="${url.url}" target="_blank">${episode.episode + url.text}</a>`).join('&nbsp;')}</li>`;
+              return `<li>${episode.urls.map(url => `<input type="checkbox" value="${url.url}"><a href="${url.url}" target="_blank">${episode.episode + url.text}</a></input>`).join('&nbsp;')}</li>`;
             }
           }).join('')}
         </ul>
@@ -153,7 +153,7 @@
         <h4>${youtube.channel}</h4>
         <ul>
           ${youtube.videos.map(video => `
-            <li><input type="checkbox" id="${video.id}" value="https://youtu.be/${video.id}"><a href="https://youtu.be/${video.id}" target="_blank">${video.title}</a></li>
+            <li><input type="checkbox" id="${video.id}" value="https://download-scheduler.herokuapp.com/https://youtu.be/${video.id}"><a href="https://youtu.be/${video.id}" target="_blank">${video.title}</a></li>
           `).join('')}
         </ul>
       `).join('');
@@ -166,7 +166,7 @@
           item.innerHTML = `<span id="item-${e.target.id}" class="item-text">${e.target.value}</span>`;
           list.appendChild(item);
         } else {
-          document.querySelector('#item-' + e.target.id).remove();
+          document.querySelector('#item-' + e.target.id).parentElement.remove();
         }
         finalTextareaUpdate();
       }));
