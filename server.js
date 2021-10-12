@@ -104,7 +104,7 @@ app.get('/links', async (req, res) => {
         if (!match || srzUrl.useH264) {
           const h264Rgx = /Episode \d+ .*link="external"/g;
           match = body.match(h264Rgx);
-          if (srzUrl.useH264 && match[0].match(hevcRgx)) { // the h264Rgx will also include hevc links, so need to remove
+          if (srzUrl.useH264 && match[0].includes('Download HEVC')) { // the h264Rgx will also include hevc links, so need to remove
             match[0] = match[0].substring(0, match[0].search('Download HEVC'));
           }
           if (!match) { // if no hevc and no h264
