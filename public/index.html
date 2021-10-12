@@ -153,7 +153,7 @@
           <ul>
             ${anime.episodes.map(episode => {
               if (episode.url) {
-                return `<li><input type="checkbox" value="${episode.url}><a href="${episode.url}" target="_blank">${episode.episode}</a></input></li>`;
+                return `<li><input type="checkbox" value="${episode.url}"><a href="${episode.url}" target="_blank">${episode.episode}</a></input></li>`;
               } else if (episode.urls) {
                 return `<li>${episode.urls.map(url => `<input type="checkbox" value="${url.url}"><a href="${url.url}" target="_blank">${episode.episode + url.text}</a></input>`).join('&nbsp;')}</li>`;
               }
