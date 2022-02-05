@@ -81,12 +81,12 @@ app.get('/links', async (req, res) => {
       .then(resp => resp.text())
       .then(body => {
         // get last updated date
-        const dateRgx = /datetime=.+?>/;
+        const dateRgx = /datetime="(.+?)">/;
         let dateMatch = body.match(dateRgx);
+        console.log('dateMatch', dateMatch)
         let lastUpdated = 'failed to find date';
         if (dateMatch) {
-          dateMatch = dateMatch[0];
-          lastUpdated = new Date(dateMatch.slice('datetime='.length, -1)); // -1 for last >
+          lastUpdated = new Date(dateMatch[1]);
         } else {
           console.log('failed to match date, url:', srzUrl.url);
         }
