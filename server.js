@@ -58,7 +58,7 @@ app.get('/links', async (req, res) => {
         for (const [i, epIndex] of epIndexes.entries()) {
           const epModal = body.substring(epIndex, i < epIndexes.length - 1 ? epIndexes[i+1] : undefined);
           const epText = epModal.match(/(?<=modal-title">Download )(.+)(?=<\/h4>)/g)[0];
-          const epUrls = epModal.match(/(?<=data-href=")(http[s]:\/\/[^"]+)/g);
+          const epUrls = epModal.match(/(?<=href=")(http[s]:\/\/[^"]+)/g);
           const epLinkTexts = epModal.match(/([^>]+?)(?=<\/a>)/g);
           episodes.unshift({ // prepend so that newer ones appear on top
             episode: epText,
