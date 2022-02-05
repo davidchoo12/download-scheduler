@@ -56,7 +56,8 @@ app.get('/links', async (req, res) => {
           epIndex = body.indexOf('modal-title">Download ', epIndex+1);
         }
         for (const [i, epIndex] of epIndexes.entries()) {
-          const epModal = body.substring(epIndex, i < epIndexes.length - 1 ? epIndexes[i+1] : undefined);
+          const epModalEndIndex = body.indexOf('modal-footer', epIndex)
+          const epModal = body.substring(epIndex, epModalEndIndex);
           const epText = epModal.match(/(?<=modal-title">Download )(.+)(?=<\/h4>)/g)[0];
           const epUrls = epModal.match(/(?<=href=")(http[s]:\/\/[^"]+)/g);
           const epLinkTexts = epModal.match(/([^>]+?)(?=<\/a>)/g);
